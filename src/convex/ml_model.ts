@@ -8449,7 +8449,7 @@ export const MODEL: RandomForestModel = {
 
 export const MODEL_INFO: ModelInfo = {
  "algorithm": "Random Forest",
- "generatedAt": "2026-08-16T14:05:56.860Z",
+ "generatedAt": "2026-08-16T14:35:44.257Z",
  "nDiseases": 15,
  "nSymptoms": 32,
  "trainSamples": 3600,

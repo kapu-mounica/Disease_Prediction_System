@@ -126,13 +126,12 @@ explicitly not a clinical tool.
                                         │ dataset/*.csv         │
                                         └───────────────────────┘
 
-  Local reference backend (same endpoints, same dataset):
-  ┌─────────────────────────┐      ┌───────────────────────────┐
-  │ React frontend          │      │ FastAPI (Python)          │
-  │ (VITE_API_URL)          │─────▶│ backend/main.py           │
-  └─────────────────────────┘      │ backend/model/*.pkl       │
-                                   │ trained by train_model.py │
-                                   └───────────────────────────┘
+  Local reference backend (same endpoints, same dataset) — standalone:
+  ┌───────────────────────────┐      ┌───────────────────────────┐
+  │ FastAPI (Python)          │      │ backend/model/*.pkl       │
+  │ backend/main.py           │─────▶│ trained by train_model.py │
+  │ (curl / /docs clients)    │      └───────────────────────────┘
+  └───────────────────────────┘
 ```
 
 ## Machine Learning Methodology
@@ -346,9 +345,11 @@ bun install
 bun run dev
 ```
 
-Open the printed local URL. For the frontend to talk to the **local Python
-backend**, point `VITE_API_URL` at `http://localhost:8000`; by default the
-frontend uses the managed live backend, which requires no configuration.
+Open the printed local URL. The web frontend always talks to the **managed
+live backend** (Convex), which requires no configuration. The Python backend
+is an equivalent reference implementation of the same REST API — exercise it
+directly with `curl` or its interactive docs at http://localhost:8000/docs
+(see [API Documentation](#api-documentation)).
 
 ## API Documentation
 
