@@ -63,6 +63,40 @@ export const MODEL: RandomForestModel = {
   "loss_of_smell",
   "loss_of_taste"
  ],
+ "featureImportance": [
+  0.050672343664208405,
+  0.04452778358440782,
+  0.0647559586740937,
+  0.007424278704567071,
+  0.030803583385567983,
+  0.031401046682475335,
+  0.010335662298251981,
+  0.027675021096951875,
+  0.049058016774035124,
+  0.015694843402464714,
+  0.03540567198667437,
+  0.05135071535734525,
+  0.013249272618064696,
+  0.03788924273529746,
+  0.019350034356592886,
+  0.060538707454337884,
+  0.05466434718917283,
+  0.03111682970345992,
+  0.04509233867165898,
+  0.025079072319898785,
+  0.008123256580903408,
+  0.01242067283280282,
+  0.03366984294524702,
+  0.03818360411461509,
+  0.02830158460215292,
+  0.029646887069168584,
+  0.0312713681839587,
+  0,
+  0.03355398559790539,
+  0.026220002301154732,
+  0.018281969067144677,
+  0.03424205604541941
+ ],
  "trees": [
   {
    "nodes": [
@@ -8449,7 +8483,7 @@ export const MODEL: RandomForestModel = {
 
 export const MODEL_INFO: ModelInfo = {
  "algorithm": "Random Forest",
- "generatedAt": "2026-08-16T14:35:44.257Z",
+ "generatedAt": "2026-08-16T14:50:13.213Z",
  "nDiseases": 15,
  "nSymptoms": 32,
  "trainSamples": 3600,
@@ -8518,6 +8552,136 @@ export const MODEL_INFO: ModelInfo = {
   "nasal_congestion",
   "loss_of_smell",
   "loss_of_taste"
+ ],
+ "featureImportance": [
+  {
+   "feature": "cough",
+   "importance": 0.0647559586740937
+  },
+  {
+   "feature": "chills",
+   "importance": 0.060538707454337884
+  },
+  {
+   "feature": "sweating",
+   "importance": 0.05466434718917283
+  },
+  {
+   "feature": "sore_throat",
+   "importance": 0.05135071535734525
+  },
+  {
+   "feature": "fever",
+   "importance": 0.050672343664208405
+  },
+  {
+   "feature": "abdominal_pain",
+   "importance": 0.049058016774035124
+  },
+  {
+   "feature": "joint_pain",
+   "importance": 0.04509233867165898
+  },
+  {
+   "feature": "headache",
+   "importance": 0.04452778358440782
+  },
+  {
+   "feature": "blurred_vision",
+   "importance": 0.03818360411461509
+  },
+  {
+   "feature": "sneezing",
+   "importance": 0.03788924273529746
+  },
+  {
+   "feature": "shortness_of_breath",
+   "importance": 0.03540567198667437
+  },
+  {
+   "feature": "loss_of_taste",
+   "importance": 0.03424205604541941
+  },
+  {
+   "feature": "wheezing",
+   "importance": 0.03366984294524702
+  },
+  {
+   "feature": "high_blood_pressure",
+   "importance": 0.03355398559790539
+  },
+  {
+   "feature": "nausea",
+   "importance": 0.031401046682475335
+  },
+  {
+   "feature": "weight_loss",
+   "importance": 0.0312713681839587
+  },
+  {
+   "feature": "dizziness",
+   "importance": 0.03111682970345992
+  },
+  {
+   "feature": "weakness",
+   "importance": 0.030803583385567983
+  },
+  {
+   "feature": "frequent_urination",
+   "importance": 0.029646887069168584
+  },
+  {
+   "feature": "excessive_thirst",
+   "importance": 0.02830158460215292
+  },
+  {
+   "feature": "diarrhea",
+   "importance": 0.027675021096951875
+  },
+  {
+   "feature": "nasal_congestion",
+   "importance": 0.026220002301154732
+  },
+  {
+   "feature": "muscle_pain",
+   "importance": 0.025079072319898785
+  },
+  {
+   "feature": "body_pain",
+   "importance": 0.019350034356592886
+  },
+  {
+   "feature": "loss_of_smell",
+   "importance": 0.018281969067144677
+  },
+  {
+   "feature": "chest_pain",
+   "importance": 0.015694843402464714
+  },
+  {
+   "feature": "runny_nose",
+   "importance": 0.013249272618064696
+  },
+  {
+   "feature": "loss_of_appetite",
+   "importance": 0.01242067283280282
+  },
+  {
+   "feature": "vomiting",
+   "importance": 0.010335662298251981
+  },
+  {
+   "feature": "skin_rash",
+   "importance": 0.008123256580903408
+  },
+  {
+   "feature": "fatigue",
+   "importance": 0.007424278704567071
+  },
+  {
+   "feature": "weight_gain",
+   "importance": 0
+  }
  ],
  "accuracy": 1,
  "precision": 1,

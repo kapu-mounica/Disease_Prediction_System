@@ -96,6 +96,12 @@ explicitly not a clinical tool.
 - **How-it-works pipeline** — visual explanation of every stage.
 - **Full error handling** — empty selection, unknown symptoms, backend
   unreachable, model missing, network failures — all with friendly messages.
+- **Consultation & next-step guidance** — after every prediction: a
+  personalized summary, “Who should I consult?”, beginner→advanced “Next
+  Steps”, questions to ask a doctor, and a prominent warning-signs section.
+- **Explainable AI** — per-prediction symptom contributions (leave-one-out
+  analysis over the ensemble) plus global Gini feature importance, with an
+  explicit “importance ≠ causation” disclaimer and a visual chart.
 - **Reproducible training** — one command retrains and re-evaluates the model
   and regenerates the artifact.
 - **Vintage editorial UI** — aged-paper tones, serif hierarchy, archival
@@ -260,13 +266,15 @@ disease-prediction-system/
 │   │   │   ├── randomForest.ts       # from-scratch forest (train + predict)
 │   │   │   ├── inference.ts          # validation, encoding, prediction builder
 │   │   │   ├── catalog.ts            # symptom catalog (categories)
+│   │   │   ├── guidance.ts           # consultation & next-step guidance content
 │   │   │   └── types.ts              # shared model types
 │   │   ├── ml_model.ts               # GENERATED trained artifact + metrics
 │   │   ├── predict.ts                # predict action (POST /predict)
 │   │   ├── symptoms.ts               # symptoms query  (GET /symptoms)
 │   │   └── modelInfo.ts              # model-info + diseases queries
 │   ├── pages/                        # Landing, Predict, HowItWorks, ModelInfo, About
-│   ├── components/                   # Nav, Footer, layout, gauge, confusion matrix…
+│   ├── components/                   # Nav, Footer, layout, gauge, confusion matrix,
+│   │                                 #   PredictionReport (consultation module)…
 │   └── index.css                     # vintage theme
 ├── backend/                          # local Python reference backend
 │   ├── main.py                       # FastAPI application (all endpoints)
@@ -405,9 +413,27 @@ Response:
     { "disease": "Influenza", "confidence": 0.87 },
     { "disease": "COVID-19", "confidence": 0.10 },
     { "disease": "Pneumonia", "confidence": 0.03 }
+  ],
+  "probabilities": [
+    { "disease": "Influenza", "probability": 0.87 },
+    { "disease": "COVID-19", "probability": 0.10 },
+    { "disease": "Pneumonia", "probability": 0.03 }
+  ],
+  "contributions": [
+    { "symptom": "body_pain", "impact": 0.12 },
+    { "symptom": "fever", "impact": 0.10 },
+    { "symptom": "cough", "impact": 0.08 },
+    { "symptom": "fatigue", "impact": 0.05 }
   ]
 }
 ```
+
+`probabilities` is the full distribution over all 15 classes;
+`contributions` lists the selected symptoms that most moved the prediction
+(impact = how much the class confidence would drop if the symptom were not
+reported). The guidance module then layers curated educational content — who
+ to consult, next steps, questions for a doctor, and warning signs — on top
+of this response in the UI.
 
 Errors: `422` for an empty list or unknown/blank symptoms (with a clear
 `detail` message); `503` if the model has not been trained/loaded.
@@ -430,6 +456,35 @@ curl -X POST http://localhost:8000/retrain
   "metrics": { "accuracy": 1.0, "precision": 1.0, "recall": 1.0, "f1": 1.0, "confusion_matrix": [[…]], "per_class": […], "params": {…} }
 }
 ```
+
+## Consultation & Next-Step Guidance Module
+
+After each prediction the frontend renders a complete decision-support
+report (educational only — never a diagnosis):
+
+1. **Prediction Summary** — possible condition, model-estimated confidence,
+   symptoms considered, other possible predictions.
+2. **Who Should I Consult?** — general specialist suggestions per disease
+   (“Consider discussing your symptoms with…”). General suggestions, not
+   mandatory referrals.
+3. **Why did the model predict this?** — per-prediction symptom contributions
+   (leave-one-out analysis) and global Gini feature importance, with an
+   explicit “feature importance ≠ medical causation” disclaimer.
+4. **Next Steps** — three progressive levels: Beginner (plain language),
+   Intermediate (top-3, confidence, alternatives, model explanation) and an
+   optional Advanced Analysis panel (model configuration, evaluation metrics,
+   full probability distribution, dataset and limitations).
+5. **Questions You Can Ask Your Doctor** — general, per-disease questions.
+   The app never suggests prescriptions or dosages.
+6. **Warning Signs** — general emergency signs plus disease-relevant extras;
+   users are directed to contact their local emergency services. No
+   country-specific emergency numbers are shown.
+7. **Final Disclaimer** — the required educational-demonstration disclaimer.
+
+All copy lives in `src/convex/ml/guidance.ts` (mirrored in the Python backend
+by `backend/symptoms.py` conventions). The module is intentionally curated
+static content: safety framing and specialist suggestions are editorial, not
+model output.
 
 ## Example Prediction
 

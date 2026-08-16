@@ -12,6 +12,7 @@ import type * as auth from "../auth.js";
 import type * as auth_emailOtp from "../auth/emailOtp.js";
 import type * as http from "../http.js";
 import type * as ml_catalog from "../ml/catalog.js";
+import type * as ml_guidance from "../ml/guidance.js";
 import type * as ml_inference from "../ml/inference.js";
 import type * as ml_randomForest from "../ml/randomForest.js";
 import type * as ml_types from "../ml/types.js";
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   "auth/emailOtp": typeof auth_emailOtp;
   http: typeof http;
   "ml/catalog": typeof ml_catalog;
+  "ml/guidance": typeof ml_guidance;
   "ml/inference": typeof ml_inference;
   "ml/randomForest": typeof ml_randomForest;
   "ml/types": typeof ml_types;

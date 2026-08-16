@@ -103,6 +103,36 @@ console.log("\n[5] Normalization + deduplication");
 const norm = validateSymptoms([" Fever ", "body-pain", "fever", "Body Pain"]);
 assert(norm.length === 2 && norm.includes("fever") && norm.includes("body_pain"), "normalizes and deduplicates symptom names");
 
+console.log("\n[6] Explainability output (probabilities + contributions)");
+assert(MODEL.featureImportance.length === MODEL.nFeatures, "model exposes per-feature Gini importance");
+const impSum = MODEL.featureImportance.reduce((s, v) => s + v, 0);
+assert(Math.abs(impSum - 1) < 1e-9, "feature importance sums to 1");
+assert(MODEL.featureImportance.every((v) => v >= 0 && v <= 1), "feature importance within [0, 1]");
+assert(MODEL_INFO.featureImportance.length === MODEL.nFeatures, "model info lists importance for every feature");
+assert(
+  MODEL_INFO.featureImportance.every((f, i, arr) => i === 0 || arr[i - 1].importance >= f.importance),
+  "model info importance is sorted descending",
+);
+const exp = buildPrediction(MODEL, validateSymptoms(["fever", "cough", "fatigue", "loss_of_smell", "loss_of_taste"]));
+assert(exp.probabilities.length === MODEL.classes.length, "returns a probability for every supported class");
+assert(
+  Math.abs(exp.probabilities.reduce((s, p) => s + p.probability, 0) - 1) < 1e-9,
+  "class probabilities sum to 1",
+);
+assert(exp.contributions.length > 0, "returns per-symptom contributions");
+assert(
+  exp.contributions.every((c) => exp.selected_symptoms.includes(c.symptom)),
+  "contributions only reference selected symptoms",
+);
+assert(
+  exp.contributions.every((c, i, arr) => i === 0 || Math.abs(arr[i - 1].impact) >= Math.abs(c.impact)),
+  "contributions are sorted by absolute impact",
+);
+assert(
+  exp.contributions[0].impact > 0 || Math.abs(exp.contributions[0].impact) < 1e-12,
+  "the top contributing symptom does not reduce the prediction",
+);
+
 console.log("\n═══════════════════════════════════════════════════");
 if (failures > 0) {
   console.error(`  ${failures} test(s) FAILED`);

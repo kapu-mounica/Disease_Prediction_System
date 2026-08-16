@@ -6,7 +6,13 @@
 
 import { SYMPTOM_CATALOG } from "./catalog";
 import { predictProbabilities } from "./randomForest";
-import type { PredictionResult, RandomForestModel, TopPrediction } from "./types";
+import type {
+  Contribution,
+  PredictionResult,
+  ProbabilityEntry,
+  RandomForestModel,
+  TopPrediction,
+} from "./types";
 
 export class PredictionValidationError extends Error {
   constructor(message: string) {
@@ -54,7 +60,30 @@ export function encodeFeatures(symptoms: string[], featureColumns: string[]): nu
   return featureColumns.map((f) => (present.has(f) ? 1 : 0));
 }
 
-/** Builds the full prediction result: top class + top-3 with confidences. */
+/**
+ * Local contributions via leave-one-out ablation: for each selected symptom,
+ * re-score the ensemble without it and measure how much the predicted class's
+ * confidence drops. Positive impact = the symptom pushed the prediction toward
+ * the predicted class. This is a genuine model-based explanation — not a guess.
+ */
+export function computeContributions(
+  model: RandomForestModel,
+  symptoms: string[],
+  predictedClassIndex: number,
+  baselineConfidence: number,
+  maxContributions = 6,
+): Contribution[] {
+  const withImpact: Contribution[] = symptoms.map((symptom) => {
+    const without = symptoms.filter((s) => s !== symptom);
+    const probs = predictProbabilities(model, encodeFeatures(without, model.featureColumns));
+    return { symptom, impact: baselineConfidence - probs[predictedClassIndex] };
+  });
+  return withImpact
+    .sort((a, b) => Math.abs(b.impact) - Math.abs(a.impact))
+    .slice(0, maxContributions);
+}
+
+/** Builds the full prediction result: top class, top-3, probabilities, contributions. */
 export function buildPrediction(model: RandomForestModel, symptoms: string[]): PredictionResult {
   const features = encodeFeatures(symptoms, model.featureColumns);
   const probs = predictProbabilities(model, features);
@@ -64,11 +93,19 @@ export function buildPrediction(model: RandomForestModel, symptoms: string[]): P
     .sort((a, b) => b.confidence - a.confidence);
 
   const top = ranked.slice(0, 3);
+  const predictedIndex = model.classes.indexOf(top[0].disease);
+  const probabilities: ProbabilityEntry[] = model.classes.map((disease, i) => ({
+    disease,
+    probability: probs[i],
+  }));
+
   return {
     predicted_disease: top[0].disease,
     confidence: top[0].confidence,
     selected_symptoms: symptoms,
     top_predictions: top,
+    probabilities,
+    contributions: computeContributions(model, symptoms, predictedIndex, top[0].confidence),
     timestamp: new Date().toISOString(),
   };
 }

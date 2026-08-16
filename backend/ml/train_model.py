@@ -117,6 +117,9 @@ def main() -> dict:
         "params": RF_PARAMS,
         "classes": classes,
         "feature_columns": FEATURE_COLUMNS,
+        "feature_importance": [
+            round(float(v), 6) for v in clf.feature_importances_
+        ],
         **{k: v for k, v in report.items() if k != "classification_report"},
     }
     (MODEL_DIR / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")

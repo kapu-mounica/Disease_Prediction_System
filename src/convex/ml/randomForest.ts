@@ -102,6 +102,7 @@ function buildTree(
   rng: () => number,
   depth: number,
   nodes: number[],
+  importance: number[],
 ): number {
   const nodeIndex = nodes.length / NODE_STRIDE;
   // Placeholder node, filled in below.
@@ -139,12 +140,16 @@ function buildTree(
     return nodeIndex;
   }
 
+  // Gini importance: impurity decrease weighted by the node's sample count
+  // (sklearn-style), accumulated per feature across the whole forest.
+  importance[split.feature] += split.gain * rows.length;
+
   const left: number[] = [];
   const right: number[] = [];
   for (const r of rows) (features[r][split.feature] > 0.5 ? right : left).push(r);
 
-  const leftChild = buildTree(left, features, labels, nClasses, params, featureSubsetSize, rng, depth + 1, nodes);
-  const rightChild = buildTree(right, features, labels, nClasses, params, featureSubsetSize, rng, depth + 1, nodes);
+  const leftChild = buildTree(left, features, labels, nClasses, params, featureSubsetSize, rng, depth + 1, nodes, importance);
+  const rightChild = buildTree(right, features, labels, nClasses, params, featureSubsetSize, rng, depth + 1, nodes, importance);
 
   nodes[nodeIndex * NODE_STRIDE + IDX_FEATURE] = split.feature;
   nodes[nodeIndex * NODE_STRIDE + IDX_THRESHOLD] = 0.5;
@@ -167,6 +172,7 @@ export function trainRandomForest(
   const featureSubsetSize = Math.max(1, Math.floor(Math.sqrt(nFeatures)));
   const trees: TreeSpec[] = [];
   const baseRng = mulberry32(params.randomSeed);
+  const importance = new Array<number>(nFeatures).fill(0);
 
   for (let t = 0; t < params.nEstimators; t++) {
     // Bootstrap sample (sampling with replacement) — per-tree RNG derived from
@@ -187,9 +193,17 @@ export function trainRandomForest(
       rng,
       0,
       nodes,
+      importance,
     );
     trees.push({ nodes });
   }
+
+  // Normalize importance: average across all trees and bootstrap samples, then
+  // scale so the values sum to 1 (sklearn convention).
+  const totalWeight = features.length * params.nEstimators;
+  for (let i = 0; i < nFeatures; i++) importance[i] /= totalWeight;
+  const sum = importance.reduce((acc, v) => acc + v, 0);
+  if (sum > 0) for (let i = 0; i < nFeatures; i++) importance[i] /= sum;
 
   return {
     algorithm: "Random Forest",
@@ -201,6 +215,7 @@ export function trainRandomForest(
     nFeatures,
     classes,
     featureColumns,
+    featureImportance: importance,
     trees,
   };
 }

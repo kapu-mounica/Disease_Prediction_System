@@ -83,7 +83,12 @@ function main(): void {
   const model = trainRandomForest(trainFeatures, trainLabels, dataset.classes, [...FEATURE_COLUMNS], PARAMS);
   const elapsedMs = Date.now() - started;
   const totalNodes = model.trees.reduce((acc, t) => acc + t.nodes.length / 5, 0);
-  console.log(`      → trained in ${(elapsedMs / 1000).toFixed(2)}s (${model.trees.length} trees, ${totalNodes} nodes).\n`);
+  console.log(`      → trained in ${(elapsedMs / 1000).toFixed(2)}s (${model.trees.length} trees, ${totalNodes} nodes).`);
+  const topFeatures = [...FEATURE_COLUMNS]
+    .map((feature, i) => ({ feature, importance: model.featureImportance[i] }))
+    .sort((a, b) => b.importance - a.importance)
+    .slice(0, 5);
+  console.log(`      → top features by Gini importance: ${topFeatures.map((f) => `${f.feature} (${(f.importance * 100).toFixed(1)}%)`).join(", ")}\n`);
 
   // 8. Evaluate.
   console.log("[5/7] Evaluating on held-out test set...");
@@ -124,6 +129,10 @@ function main(): void {
     params: { ...PARAMS, featureSubsetSize: model.featureSubsetSize },
     classes: dataset.classes,
     featureColumns: [...FEATURE_COLUMNS],
+    featureImportance: FEATURE_COLUMNS.map((feature, i) => ({
+      feature,
+      importance: model.featureImportance[i],
+    })).sort((a, b) => b.importance - a.importance),
     accuracy: evalResult.accuracy,
     precision: evalResult.precision,
     recall: evalResult.recall,

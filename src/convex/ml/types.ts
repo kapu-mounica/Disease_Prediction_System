@@ -23,6 +23,8 @@ export interface RandomForestModel {
   nFeatures: number;
   classes: string[];
   featureColumns: string[];
+  /** Gini-based global feature importance, normalized so entries sum to 1. */
+  featureImportance: number[];
   trees: TreeSpec[];
 }
 
@@ -57,6 +59,8 @@ export interface ModelInfo {
   };
   classes: string[];
   featureColumns: string[];
+  /** Global feature importance, sorted descending by importance. */
+  featureImportance: { feature: string; importance: number }[];
   accuracy: number;
   precision: number;
   recall: number;
@@ -70,11 +74,31 @@ export interface TopPrediction {
   confidence: number;
 }
 
+/** Probability for every supported class (aligned with model.classes). */
+export interface ProbabilityEntry {
+  disease: string;
+  probability: number;
+}
+
+/**
+ * Local contribution of one symptom to the prediction: how many points of
+ * confidence the symptom contributed to the predicted class (computed by
+ * removing the symptom and re-scoring the ensemble — ablation, not a guess).
+ */
+export interface Contribution {
+  symptom: string;
+  impact: number;
+}
+
 export interface PredictionResult {
   predicted_disease: string;
   confidence: number;
   selected_symptoms: string[];
   top_predictions: TopPrediction[];
+  /** Full probability distribution over all supported classes. */
+  probabilities: ProbabilityEntry[];
+  /** Top contributing symptoms for this specific prediction, most impactful first. */
+  contributions: Contribution[];
   timestamp: string;
 }
 

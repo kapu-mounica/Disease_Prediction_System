@@ -9,18 +9,16 @@ import {
   Eraser,
   Loader2,
   Search,
-  Stethoscope,
   WifiOff,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Corners, Ornament, SectionHeading } from "@/components/vintage";
+import { SectionHeading } from "@/components/vintage";
 import { Disclaimer } from "@/components/Disclaimer";
-import { ConfidenceGauge } from "@/components/ConfidenceGauge";
+import { PredictionReport } from "@/components/PredictionReport";
 import { useBootTimeout } from "@/hooks/use-boot-timeout";
 import { SYMPTOM_CATEGORIES, SYMPTOM_CATALOG } from "@/convex/ml/catalog";
 import type { PredictionResult } from "@/convex/ml/types";
-import { formatTimestamp, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 function extractErrorMessage(error: unknown): string {
@@ -38,7 +36,6 @@ export default function Predict() {
   const predict = useAction(api.predict.predict);
   const bootTimedOut = useBootTimeout(12000);
   const backendDown = symptoms === undefined && bootTimedOut;
-  const nTrees = modelInfo?.params.nEstimators;
 
   const [selected, setSelected] = useState<string[]>([]);
   const [search, setSearch] = useState("");
@@ -47,7 +44,6 @@ export default function Predict() {
   const [error, setError] = useState<string | null>(null);
 
   const catalog = symptoms ?? SYMPTOM_CATALOG;
-  const known = useMemo(() => new Set(catalog.map((s) => s.id)), [catalog]);
 
   const query = search.trim().toLowerCase();
   const visible = useMemo(
@@ -275,7 +271,7 @@ export default function Predict() {
         </div>
       </div>
 
-      {/* ── Results ───────────────────────────────────────────── */}
+      {/* ── Results: full consultation report ─────────────────── */}
       <AnimatePresence mode="wait">
         {result && !isLoading && (
           <motion.section
@@ -286,110 +282,12 @@ export default function Predict() {
             transition={{ duration: 0.45, ease: "easeOut" }}
             className="mt-12"
           >
-            <div className="paper-card relative px-6 py-8 sm:px-10 sm:py-10">
-              <Corners />
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="archival-label">Prediction Record</p>
-                <p className="text-xs tabular-nums text-muted-foreground">
-                  Filed {formatTimestamp(result.timestamp)}
-                </p>
-              </div>
-
-              <div className="mt-6 grid gap-10 lg:grid-cols-2">
-                {/* Predicted disease + gauge */}
-                <div>
-                  <p className="archival-label">Predicted Disease</p>
-                  <h2 className="mt-2 font-display text-4xl font-bold tracking-tight sm:text-5xl">
-                    {result.predicted_disease}
-                  </h2>
-                  <p className="mt-2 text-sm italic text-muted-foreground">
-                    Preliminary assessment by a {nTrees ?? "trained"}-tree Random Forest ensemble
-                    — educational only.
-                  </p>
-                  <div className="mt-6 max-w-md">
-                    <ConfidenceGauge value={result.confidence} size="lg" />
-                  </div>
-                  <p className="mt-3 max-w-md text-xs leading-relaxed text-muted-foreground">
-                    Confidence reflects the fraction of trees in the ensemble
-                    that voted for this class. It is a model statistic, not a
-                    statement of medical certainty.
-                  </p>
-                </div>
-
-                {/* Top 3 */}
-                <div>
-                  <p className="archival-label">Top 3 Candidate Conditions</p>
-                  <ol className="mt-4 space-y-3">
-                    {result.top_predictions.map((top, i) => (
-                      <li key={top.disease} className="flex items-center gap-4">
-                        <span
-                          className={cn(
-                            "flex size-9 shrink-0 items-center justify-center rounded-full border-2 font-display text-sm font-bold",
-                            i === 0
-                              ? "border-accent bg-accent/10 text-accent"
-                              : "border-foreground/30 text-muted-foreground",
-                          )}
-                        >
-                          {i + 1}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-baseline justify-between gap-3">
-                            <span className="truncate font-display text-base font-semibold">
-                              {top.disease}
-                            </span>
-                            <span className="text-sm font-semibold tabular-nums text-accent">
-                              {pct(top.confidence)}
-                            </span>
-                          </div>
-                          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-foreground/10">
-                            <motion.div
-                              className="h-full rounded-full bg-accent/80"
-                              initial={{ width: 0 }}
-                              animate={{
-                                width: `${(top.confidence / (result.top_predictions[0].confidence || 1)) * 100}%`,
-                              }}
-                              transition={{ duration: 0.6, delay: 0.15 + i * 0.1 }}
-                            />
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-
-                  <div className="mt-6 border-t border-dashed border-foreground/25 pt-4">
-                    <p className="archival-label">Symptoms Consulted</p>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {result.selected_symptoms.map((id) => (
-                        <span
-                          key={id}
-                          className="rounded-[3px] border border-foreground/25 bg-background px-2 py-0.5 text-xs"
-                        >
-                          {selectedLabels.get(id) ?? id}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-foreground/15 pt-5">
-                <p className="flex items-center gap-2 text-xs italic text-muted-foreground">
-                  <Stethoscope className="size-4" />
-                  A preliminary machine-learning prediction — not a diagnosis.
-                </p>
-                <Button
-                  variant="outline"
-                  className="btn-editorial rounded-[3px]"
-                  onClick={() => setResult(null)}
-                >
-                  Predict Again
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <Ornament />
-            </div>
+            <PredictionReport
+              result={result}
+              modelInfo={modelInfo}
+              selectedLabels={selectedLabels}
+              onReset={() => setResult(null)}
+            />
           </motion.section>
         )}
       </AnimatePresence>

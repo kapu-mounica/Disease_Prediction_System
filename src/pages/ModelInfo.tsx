@@ -15,7 +15,12 @@ import { ConfusionMatrix } from "@/components/ConfusionMatrix";
 import { Corners, SectionHeading } from "@/components/vintage";
 import { Disclaimer } from "@/components/Disclaimer";
 import { useBootTimeout } from "@/hooks/use-boot-timeout";
+import { SYMPTOM_CATALOG } from "@/convex/ml/catalog";
 import { pct } from "@/lib/format";
+
+function labelFor(symptomId: string): string {
+  return SYMPTOM_CATALOG.find((s) => s.id === symptomId)?.label ?? symptomId;
+}
 
 const TOOLTIP_STYLE = {
   backgroundColor: "var(--card)",
@@ -153,6 +158,58 @@ export default function ModelInfo() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+      </div>
+
+      {/* Feature importance */}
+      <div className="paper-card mt-6 p-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-lg font-semibold">Feature Importance</h2>
+          <span className="archival-label">Gini importance · learned during training</span>
+        </div>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+          Which symptom features the forest relies on most when separating the
+          15 conditions. This describes the model's decision boundary — it does
+          not mean a symptom medically causes a disease.
+        </p>
+        <div className="mt-5 h-72">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              layout="vertical"
+              data={modelInfo.featureImportance.slice(0, 10).map((f) => ({
+                label: labelFor(f.feature),
+                importance: f.importance,
+              }))}
+              margin={{ top: 0, right: 24, left: 8, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+              <XAxis
+                type="number"
+                domain={[0, modelInfo.featureImportance[0]?.importance ?? 0.1]}
+                tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`}
+                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                type="category"
+                dataKey="label"
+                width={150}
+                tick={{ fontSize: 12, fill: "var(--foreground)" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                cursor={{ fill: "color-mix(in oklab, var(--accent) 8%, transparent)" }}
+                contentStyle={TOOLTIP_STYLE}
+                formatter={(value: number | string) => [
+                  `${(Number(value) * 100).toFixed(1)}%`,
+                  "Importance",
+                ]}
+              />
+              <Bar dataKey="importance" radius={[0, 2, 2, 0]} fill="var(--chart-3)" maxBarSize={18} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
